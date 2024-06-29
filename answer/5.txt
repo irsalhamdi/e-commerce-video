@@ -1,0 +1,69 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+)
+
+type Comment struct {
+	CommentId      int       `json:"commentId"`
+	CommentContent string    `json:"commentContent"`
+	Replies        []*Comment `json:"replies,omitempty"`
+}
+
+func countComments(comments []*Comment) int {
+	total := 0
+
+	for _, comment := range comments {
+		total++ // Tambahkan komentar utama
+
+		if comment.Replies != nil {
+			total += len(comment.Replies)
+			// Gunakan rekursi untuk menghitung balasan dari balasan
+			total += countComments(comment.Replies)
+		}
+	}
+
+	return total
+}
+
+func main() {
+	data := `
+        [
+            {
+                "commentId": 1,
+                "commentContent": "Hai",
+                "replies": [
+                    {
+                        "commentId": 11,
+                        "commentContent": "Hai juga",
+                        "replies": [
+                            {"commentId": 111, "commentContent": "Haai juga hai jugaa"},
+                            {"commentId": 112, "commentContent": "Haai juga hai jugaa"}
+                        ]
+                    },
+                    {
+                        "commentId": 12,
+                        "commentContent": "Hai juga",
+                        "replies": [
+                            {"commentId": 121, "commentContent": "Haai juga hai jugaa"}
+                        ]
+                    }
+                ]
+            },
+            {
+                "commentId": 2,
+                "commentContent": "Halooo"
+            }
+        ]`
+
+	var comments []*Comment
+	err := json.Unmarshal([]byte(data), &comments)
+	if err != nil {
+		fmt.Println("Error parsing JSON:", err)
+		return
+	}
+
+	total := countComments(comments)
+	fmt.Println("Total komentar:", total)
+}

@@ -1,0 +1,141 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+)
+
+type FruitType string
+
+const (
+	FruitTypeImport FruitType = "IMPORT"
+	FruitTypeLocal  FruitType = "LOCAL"
+)
+
+type Fruit struct {
+	FruitId   int       `json:"fruitId"`
+	FruitName string    `json:"fruitName"`
+	FruitType FruitType `json:"fruitType"`
+	Stock     int       `json:"stock"`
+}
+
+func listAllFruits(fruits []Fruit) []string {
+	var fruitNames []string
+	seen := make(map[string]bool)
+
+	for _, fruit := range fruits {
+		name := fruit.FruitName
+		if !seen[name] {
+			fruitNames = append(fruitNames, name)
+			seen[name] = true
+		}
+	}
+
+	return fruitNames
+}
+
+func countContainersByType(fruits []Fruit) (int, map[FruitType][]string) {
+	containerCounts := make(map[FruitType][]string)
+
+	for _, fruit := range fruits {
+		if _, found := containerCounts[fruit.FruitType]; !found {
+			containerCounts[fruit.FruitType] = []string{}
+		}
+		containerCounts[fruit.FruitType] = append(containerCounts[fruit.FruitType], fruit.FruitName)
+	}
+
+	return len(containerCounts), containerCounts
+}
+
+func totalStockByType(fruits []Fruit) map[FruitType]int {
+	stockByType := make(map[FruitType]int)
+
+	for _, fruit := range fruits {
+		stockByType[fruit.FruitType] += fruit.Stock
+	}
+
+	return stockByType
+}
+
+func main() {
+	data := `
+[
+    {
+        "fruitId": 1,
+        "fruitName": "Apel",
+        "fruitType": "IMPORT",
+        "stock": 10
+    },
+    {
+        "fruitId": 2,
+        "fruitName": "Kurma",
+        "fruitType": "IMPORT",
+        "stock": 20
+    },
+    {
+        "fruitId": 3,
+        "fruitName": "apel",
+        "fruitType": "IMPORT",
+        "stock": 50
+    },
+    {
+        "fruitId": 4,
+        "fruitName": "Manggis",
+        "fruitType": "LOCAL",
+        "stock": 100
+    },
+    {
+        "fruitId": 5,
+        "fruitName": "Jeruk Bali",
+        "fruitType": "LOCAL",
+        "stock": 10
+    },
+    {
+        "fruitId": 5,
+        "fruitName": "KURMA",
+        "fruitType": "IMPORT",
+        "stock": 20
+    },
+    {
+        "fruitId": 5,
+        "fruitName": "Salak",
+        "fruitType": "LOCAL",
+        "stock": 150
+    }
+]
+`
+
+	var fruits []Fruit
+	err := json.Unmarshal([]byte(data), &fruits)
+	if err != nil {
+		fmt.Println("Error parsing JSON:", err)
+		return
+	}
+
+	fmt.Println("Buah yang dimiliki Andi:")
+	allFruits := listAllFruits(fruits)
+	for _, name := range allFruits {
+		fmt.Println("-", name)
+	}
+	fmt.Println()
+
+	fmt.Println("Andi memisahkan buahnya berdasarkan tipe:")
+	numContainers, containers := countContainersByType(fruits)
+	fmt.Println("Jumlah wadah yang dibutuhkan:", numContainers)
+	for fruitType, names := range containers {
+		fmt.Printf("- Wadah tipe %s:\n", fruitType)
+		for _, name := range names {
+			fmt.Println("  -", name)
+		}
+	}
+	fmt.Println()
+
+	fmt.Println("Total stock buah di masing-masing wadah:")
+	stockByType := totalStockByType(fruits)
+	for fruitType, total := range stockByType {
+		fmt.Printf("- Total stock untuk wadah tipe %s: %d\n", fruitType, total)
+	}
+
+    fmt.Println("1. Konsistensi Data: Terdapat beberapa inkonsistensi dalam data, seperti penulisan nama buah dengan huruf kapital yang berbeda-beda (Apel, apel, Kurma, KURMA), yang bisa membingungkan dalam pemrosesan data dan pencarian.")
+    fmt.Println(" 2.Duplikasi Key: Beberapa objek dalam data JSON memiliki fruitId yang sama, yang seharusnya unik untuk setiap buah. Ini dapat menyebabkan masalah dalam mengelompokkan atau mengakses data secara konsisten.z")
+}
